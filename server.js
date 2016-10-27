@@ -2,27 +2,47 @@ const express = require('express');
 const app = express();
 const port = 3500;
 const bodyParser = require('body-parser');
-const jwt = require('jsonwebtoken');
+const MongoClient = require('mongodb').MongoClient;
 const ejs = require('ejs');
+const jwt = require('jsonwebtoken');
+
+MongoClient.connect('mongodb://localhost:27017/jwt-play', (err, database) => {
+  if (err) return console.log(err);
+  db = database;
+
+  app.listen(port, () => {
+    console.log('listening all the time on', port);
+  });
+});
 
 app.use(bodyParser.urlencoded({extended: true}));
 
-app.listen(port, () => {
-  console.log('listening all the time on', port);
-});
+app.set('view engine', 'ejs');
 
 const templatesDir = __dirname + '/templates/';
 
 app.get('/', (req, res) => {
-  res.sendFile(templatesDir + 'index.html');
+  res.render('index.ejs');
+});
+
+app.get('/buildings', (req, res) => {
+  db.collection('buildings').find().toArray((err, result) => {
+    if (err) return console.log(err);
+    res.render('buildings/index.ejs', {buildings: result});
+  });
 });
 
 app.get('/buildings/new', (req, res) => {
-  res.sendFile(templatesDir + 'buildings/new.html');
+  res.render('buildings/new.ejs');
 });
 
 app.post('/buildings', (req, res) => {
-  console.log('hello');
+  db.collection('buildings').save(req.body, (err, result) => {
+    if (err) return console.log(err);
+
+    console.log('buliding added to db');
+  });
+  res.redirect('/buildings');
 });
 
 app.get('/auth', (req, res) => {
